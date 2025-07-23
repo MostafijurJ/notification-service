@@ -1,5 +1,5 @@
 
-# 1. Notification System Requirements
+# Notification System Requirements
 
 This document outlines the **functional requirements** for building a **scalable, reliable, and extensible notification system** supporting multiple channels, real-time and scheduled delivery, and user customization.
 
@@ -58,6 +58,11 @@ The system must support multiple delivery channels:
 
 ---
 
-# Requirement Diagram
+## Summary
+The notification system must be:
+- **Modular**: Easy to extend with new channels (e.g., WhatsApp, voice calls).
+- **Scalable**: Handle both real-time and bulk events.
+- **User-Centric**: Respect preferences and DND policies.
+- **Efficient**: Use queuing, batching, and rate-limiting for performance.
 
-![notification-system-architecture.png](docs/notification-system-architecture.png)
+

@@ -12,12 +12,19 @@ import (
 func main() {
 	cfg := config.Load()
 
-	// PostgreSQL Connection Test
+	// PostgresSQL Connection Test
 	db, err := sql.Open("postgres", cfg.PostgresDSN)
 	if err != nil {
 		log.Fatalf("❌ Failed to connect Postgres: %v", err)
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			log.Printf("Warning: failed to close Postgres connection: %v", err)
+		} else {
+			log.Println("✅ Postgres connection closed successfully")
+		}
+	}(db)
 
 	if err := utils.TestPostgresConnection(db); err != nil {
 		log.Fatal(err)

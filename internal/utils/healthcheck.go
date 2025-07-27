@@ -8,6 +8,7 @@ import (
 	"net"
 	"time"
 
+	kafkaPkg "github.com/mostafijurj/notification-service/internal/kafka"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -85,5 +86,24 @@ func InitKafkaTopic(broker, topic string, partitions int) error {
 	}
 	log.Println("✅ Kafka topic ensured/created")
 
+	return nil
+}
+
+// TestKafkaProduceConsume checks Kafka by producing and consuming a test message
+func TestKafkaProduceConsume(broker, topic string) error {
+	testKey := "healthcheck-key"
+	testValue := "healthcheck-value"
+
+	if err := kafkaPkg.ProduceMessage(broker, topic, testKey, testValue); err != nil {
+		return fmt.Errorf("produce failed: %v", err)
+	}
+	key, value, err := kafkaPkg.ConsumeMessage(broker, topic, 0)
+	if err != nil {
+		return fmt.Errorf("consume failed: %v", err)
+	}
+	if key != testKey || value != testValue {
+		return fmt.Errorf("mismatched message: got key=%s value=%s", key, value)
+	}
+	log.Println("✅ Kafka produce/consume healthcheck passed")
 	return nil
 }

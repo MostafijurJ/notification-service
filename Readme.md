@@ -3,6 +3,8 @@
 
 This document outlines the **functional requirements** for building a **scalable, reliable, and extensible notification system** supporting multiple channels, real-time and scheduled delivery, and user customization.
 
+## Technology Stack
+    Golang, PostgreSQL, Redis, Kafka, Firebase Cloud Messaging (FCM)
 ---
 
 ## Functional Requirements

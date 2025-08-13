@@ -4,8 +4,12 @@ import (
 	"database/sql"
 	"github.com/gorilla/mux"
 	"github.com/mostafijurj/notification-service/config"
+	"github.com/mostafijurj/notification-service/internal/cache"
+	"github.com/mostafijurj/notification-service/internal/controller"
+	"github.com/mostafijurj/notification-service/internal/db"
 	"github.com/mostafijurj/notification-service/internal/logger"
 	"github.com/mostafijurj/notification-service/internal/middleware"
+	"github.com/mostafijurj/notification-service/internal/repository"
 	"github.com/mostafijurj/notification-service/internal/routes"
 	"github.com/mostafijurj/notification-service/internal/utils"
 	"log"
@@ -20,9 +24,20 @@ func main() {
 
 	preConnectionTest(nil, cfg)
 
+	dbConn, err := db.OpenPostgres(cfg.PostgresDSN)
+	if err != nil { log.Fatalf("db open: %v", err) }
+	if err := db.RunMigrations(r.Context(), dbConn); err != nil { log.Fatalf("migrations: %v", err) }
+	repo := repository.NewRepository(dbConn)
+
+	redisCli, err := cache.NewRedis(cfg.RedisURL)
+	if err != nil { log.Fatalf("redis: %v", err) }
+
+	dep := &controller.Dependencies{Repo: repo, Svc: service.NewNotificationService(repo, redisCli, cfg.KafkaBrokers)}
+
 	router := mux.NewRouter()
 	router.Use(middleware.RequestIDMiddleware)
 	routes.HomeRoutes(router)
+	routes.V1Routes(router, dep)
 
 	logger.Info.Printf("Server starting on :%s", cfg.AppPort)
 	if err := http.ListenAndServe(":"+cfg.AppPort, router); err != nil {

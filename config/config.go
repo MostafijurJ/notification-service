@@ -30,7 +30,7 @@ func Load() *Config {
 
 	pgDSN := getEnv("POSTGRES_DSN", "postgres://postgres:postgres@localhost:5432/notifications?sslmode=disable")
 	// Prefer JDBC_POSTGRES_URL if provided; normalize to lib/pq-compatible DSN
-	if jdbcPg, ok := os.LookupEnv("JDBC_POSTGRES_URL"); ok && jdbcPg != "" {
+	if jdbcPg, ok := os.LookupEnv("POSTGRES_DSN"); ok && jdbcPg != "" {
 		pgDSN = ensurePostgresSSLParam(normalizeJDBCURL(jdbcPg))
 	} else if strings.HasPrefix(pgDSN, "jdbc:") {
 		pgDSN = ensurePostgresSSLParam(normalizeJDBCURL(pgDSN))

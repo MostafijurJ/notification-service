@@ -1,0 +1,228 @@
+{
+  "info": {
+    "_postman_id": "7b9b91d0-0e34-4d83-9f2a-1e4b1a9bb001",
+    "name": "Notification Service API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health - Index",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/",
+          "host": ["{{baseUrl}}"],
+          "path": [""]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health - Random Text",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/tex",
+          "host": ["{{baseUrl}}"],
+          "path": ["tex"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications - Send (immediate)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"},
+          {"key": "Idempotency-Key", "value": "{{idemKey}}"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": {{userId}},\n  \"type_key\": \"order.confirmed\",\n  \"channels\": [\"inapp\"],\n  \"payload\": { \"order_id\": \"ORD-123\" },\n  \"priority\": \"low\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v1/notifications",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "notifications"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('has data array', function () { var json = pm.response.json(); pm.expect(Array.isArray(json.data)).to.be.true; });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Preferences - Upsert",
+      "request": {
+        "method": "POST",
+        "header": [ {"key": "Content-Type", "value": "application/json"} ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"type_key\": \"promo.offer\",\n  \"channel\": \"sms\",\n  \"opted_in\": false\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v1/preferences/{{userId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "preferences", "{{userId}}"]
+        }
+      },
+      "event": [
+        {"listen":"test","script":{"type":"text/javascript","exec":["pm.test('status 200', function () { pm.response.to.have.status(200); });"]}}
+      ]
+    },
+    {
+      "name": "DND - Upsert",
+      "request": {
+        "method": "PUT",
+        "header": [ {"key": "Content-Type", "value": "application/json"} ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start_time\": \"21:00:00\",\n  \"end_time\": \"07:00:00\",\n  \"timezone\": \"UTC\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v1/dnd/{{userId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "dnd", "{{userId}}"]
+        }
+      },
+      "event": [
+        {"listen":"test","script":{"type":"text/javascript","exec":["pm.test('status 200', function () { pm.response.to.have.status(200); });"]}}
+      ]
+    },
+    {
+      "name": "Groups - Create",
+      "request": {
+        "method": "POST",
+        "header": [ {"key": "Content-Type", "value": "application/json"} ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Premium Users\",\n  \"description\": \"High value customers\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v1/groups",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "groups"]
+        }
+      },
+      "event": [
+        {"listen":"test","script":{"type":"text/javascript","exec":["pm.test('status 200', function () { pm.response.to.have.status(200); });","pm.test('has group_id', function(){ var j = pm.response.json(); pm.expect(j.data.group_id).to.exist; pm.collectionVariables.set('groupId', j.data.group_id); });"]}}
+      ]
+    },
+    {
+      "name": "Groups - Add Member",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v1/groups/{{groupId}}/members/{{userId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "groups", "{{groupId}}", "members", "{{userId}}"]
+        }
+      },
+      "event": [
+        {"listen":"test","script":{"type":"text/javascript","exec":["pm.test('status 200', function () { pm.response.to.have.status(200); });"]}}
+      ]
+    },
+    {
+      "name": "Campaigns - Create (scheduled)",
+      "request": {
+        "method": "POST",
+        "header": [ {"key": "Content-Type", "value": "application/json"} ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"New Year Promo\",\n  \"type_key\": \"promo.offer\",\n  \"channel\": \"inapp\",\n  \"segment_group_id\": {{groupId}},\n  \"scheduled_at\": \"{{scheduledAt}}\",\n  \"priority\": \"low\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v1/campaigns",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "campaigns"]
+        }
+      },
+      "event": [
+        {"listen":"test","script":{"type":"text/javascript","exec":["pm.test('status 200', function () { pm.response.to.have.status(200); });","pm.test('has campaign_id', function(){ var j = pm.response.json(); pm.expect(j.data.campaign_id).to.exist; });"]}}
+      ]
+    },
+    {
+      "name": "In-App - List",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v1/inapp/{{userId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "inapp", "{{userId}}"]
+        }
+      },
+      "event": [
+        {"listen":"test","script":{"type":"text/javascript","exec":["pm.test('status 200', function () { pm.response.to.have.status(200); });"]}}
+      ]
+    },
+    {
+      "name": "In-App - Mark Read",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v1/inapp/{{inAppId}}?read=true",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "inapp", "{{inAppId}}"],
+          "query": [ {"key": "read", "value": "true"} ]
+        }
+      },
+      "event": [
+        {"listen":"test","script":{"type":"text/javascript","exec":["pm.test('status 200', function () { pm.response.to.have.status(200); });"]}}
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if(!pm.collectionVariables.get('idemKey')){ pm.collectionVariables.set('idemKey', 'idem-' + Date.now()); }",
+          "if(!pm.collectionVariables.get('scheduledAt')){ var d = new Date(Date.now()+5*60*1000).toISOString(); pm.collectionVariables.set('scheduledAt', d); }"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "userId", "value": "1" },
+    { "key": "groupId", "value": "1" },
+    { "key": "inAppId", "value": "1" },
+    { "key": "idemKey", "value": "" },
+    { "key": "scheduledAt", "value": "" }
+  ]
+}

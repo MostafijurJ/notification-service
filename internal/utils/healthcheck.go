@@ -9,7 +9,8 @@ import (
 	"time"
 
 	kafkaPkg "github.com/mostafijurj/notification-service/internal/kafka"
-	"github.com/segmentio/kafka-go"
+	"github.com/redis/go-redis/v9"
+	
 )
 
 // TestPostgresConnection checks if PostgreSQL is reachable
@@ -105,5 +106,34 @@ func TestKafkaProduceConsume(broker, topic string) error {
 		return fmt.Errorf("mismatched message: got key=%s value=%s", key, value)
 	}
 	log.Println("✅ Kafka produce/consume healthcheck passed")
+	return nil
+}
+
+// TestRedisConnection checks if Redis is reachable
+func TestRedisConnection(redisURL string) error {
+	// Parse Redis URL
+	opt, err := redis.ParseURL(redisURL)
+	if err != nil {
+		return fmt.Errorf("failed to parse Redis URL: %v", err)
+	}
+
+	client := redis.NewClient(opt)
+	defer func(client *redis.Client) {
+		if err := client.Close(); err != nil {
+			log.Printf("⚠️  Warning: failed to close Redis connection: %v", err)
+		} else {
+			log.Println("ℹ️  Redis connection closed")
+		}
+	}(client)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Test connection with PING command
+	if err := client.Ping(ctx).Err(); err != nil {
+		return fmt.Errorf("Redis connection failed: %v", err)
+	}
+
+	log.Println("✅ Redis connection successful")
 	return nil
 }

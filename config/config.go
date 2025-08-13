@@ -48,7 +48,7 @@ func Load() *Config {
 		AppEnv:       env,
 		AppPort:      getEnv("APP_PORT", "8081"),
 		PostgresDSN:  pgDSN,
-		KafkaBrokers: getEnv("KAFKA_BROKERS", "localhost:19092"),
+		KafkaBrokers: getEnv("KAFKA_BROKERS", "localhost:9092"),
 		RedisURL:     redisURL,
 	}
 	log.Printf("Loaded configuration for %s environment", env)

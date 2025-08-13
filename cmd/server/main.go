@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"database/sql"
+	"log"
+	"net/http"
+
 	"github.com/gorilla/mux"
 	"github.com/mostafijurj/notification-service/config"
 	"github.com/mostafijurj/notification-service/internal/cache"
@@ -14,8 +17,6 @@ import (
 	"github.com/mostafijurj/notification-service/internal/routes"
 	"github.com/mostafijurj/notification-service/internal/service"
 	"github.com/mostafijurj/notification-service/internal/utils"
-	"log"
-	"net/http"
 
 	_ "github.com/lib/pq"
 )
@@ -73,18 +74,24 @@ func preConnectionTest(err error, cfg *config.Config) {
 	}
 
 	// Kafka Connection Test
-	/*	topic := "notifications"
-			if err := utils.InitKafkaTopic(cfg.KafkaBrokers, topic, 1); err != nil {
-				log.Fatalf("❌ Kafka topic initialization failed: %v", err)
-			}
-			if err := utils.TestKafkaConnection(cfg.KafkaBrokers, topic); err != nil {
-				log.Fatal(err)
-			}
+	topic := "notifications"
+	if err := utils.InitKafkaTopic(cfg.KafkaBrokers, topic, 1); err != nil {
+		log.Fatalf("❌ Kafka topic initialization failed: %v", err)
+	}
+	if err := utils.TestKafkaConnection(cfg.KafkaBrokers, topic); err != nil {
+		log.Fatal(err)
+	}
 
-		// Produce and consume a test message
-		err = utils.TestKafkaProduceConsume(cfg.KafkaBrokers, topic)
-		if err != nil {
-			log.Fatalf("❌ Kafka produce/consume test failed: %v", err)
-		}*/
+	// Produce and consume a test message
+	err = utils.TestKafkaProduceConsume(cfg.KafkaBrokers, topic)
+	if err != nil {
+		log.Fatalf("❌ Kafka produce/consume test failed: %v", err)
+	}
+
+	// Redis Connection Test
+	if err := utils.TestRedisConnection(cfg.RedisURL); err != nil {
+		log.Fatalf("❌ Redis connection failed: %v", err)
+	}
+
 	log.Println("🚀 All connections are healthy. Ready to start the service.")
 }

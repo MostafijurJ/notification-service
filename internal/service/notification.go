@@ -8,7 +8,6 @@ import (
 
 	"github.com/mostafijurj/notification-service/internal/cache"
 	"github.com/mostafijurj/notification-service/internal/kafka"
-	"github.com/mostafijurj/notification-service/internal/logger"
 	"github.com/mostafijurj/notification-service/internal/repository"
 )
 
@@ -21,14 +20,22 @@ type NotificationRequest struct {
 	ScheduledAt *string           `json:"scheduled_at"`  // RFC3339
 }
 
-type NotificationService struct {
-	Repo      *repository.Repository
-	Redis     *cache.Redis
-	Broker    string
+// NotificationRepo defines the subset of repository used by NotificationService
+// This enables mocking in unit tests.
+type NotificationRepo interface {
+	CreateNotification(ctx context.Context, n repository.NotificationCreate) (int64, error)
+	GetDND(ctx context.Context, userID int64) (start, end, tz string, found bool, err error)
 }
 
-func NewNotificationService(repo *repository.Repository, redis *cache.Redis, broker string) *NotificationService {
-	return &NotificationService{Repo: repo, Redis: redis, Broker: broker}
+type NotificationService struct {
+	Repo      NotificationRepo
+	Redis     *cache.Redis
+	Broker    string
+	Produce   func(broker, topic, key, value string) error
+}
+
+func NewNotificationService(repo NotificationRepo, redis *cache.Redis, broker string) *NotificationService {
+	return &NotificationService{Repo: repo, Redis: redis, Broker: broker, Produce: kafka.ProduceMessage}
 }
 
 func (s *NotificationService) Enqueue(ctx context.Context, req NotificationRequest, idempotencyKey *string) ([]int64, error) {
@@ -69,7 +76,7 @@ func (s *NotificationService) Enqueue(ctx context.Context, req NotificationReque
 			readyTopic := resolveReadyTopic(ch, req.Priority)
 			msgKey := fmt.Sprintf("user:%d", req.UserID)
 			msgVal := fmt.Sprintf("%d", id)
-			_ = kafka.ProduceMessage(s.Broker, readyTopic, msgKey, msgVal)
+			_ = s.Produce(s.Broker, readyTopic, msgKey, msgVal)
 		}
 	}
 	return ids, nil

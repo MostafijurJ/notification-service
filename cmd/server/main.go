@@ -11,9 +11,11 @@ import (
 	"github.com/mostafijurj/notification-service/internal/middleware"
 	"github.com/mostafijurj/notification-service/internal/repository"
 	"github.com/mostafijurj/notification-service/internal/routes"
+	"github.com/mostafijurj/notification-service/internal/service"
 	"github.com/mostafijurj/notification-service/internal/utils"
 	"log"
 	"net/http"
+	"context"
 
 	_ "github.com/lib/pq"
 )
@@ -26,7 +28,7 @@ func main() {
 
 	dbConn, err := db.OpenPostgres(cfg.PostgresDSN)
 	if err != nil { log.Fatalf("db open: %v", err) }
-	if err := db.RunMigrations(r.Context(), dbConn); err != nil { log.Fatalf("migrations: %v", err) }
+	if err := db.RunMigrations(context.Background(), dbConn); err != nil { log.Fatalf("migrations: %v", err) }
 	repo := repository.NewRepository(dbConn)
 
 	redisCli, err := cache.NewRedis(cfg.RedisURL)

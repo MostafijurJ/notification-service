@@ -112,7 +112,7 @@ func CreateCampaign(dep *Dependencies) http.HandlerFunc {
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil { w.WriteHeader(http.StatusBadRequest); _ = json.NewEncoder(w).Encode(simpleResponse{http.StatusBadRequest, "invalid payload", nil}); return }
 		id, err := dep.Repo.CreateCampaign(ctx, repository.CampaignCreate{Name: body.Name, TypeKey: body.TypeKey, Channel: body.Channel, SegmentGroupID: body.SegmentGroupID, ScheduledAt: body.ScheduledAt, Priority: body.Priority})
 		if err != nil { w.WriteHeader(http.StatusInternalServerError); _ = json.NewEncoder(w).Encode(simpleResponse{http.StatusInternalServerError, "failed", nil}); return }
-		_ = json.NewEncoder(w).Encode(simpleResponse{http.StatusOK, "created", map[string]int64{"campaign_id": id})
+		_ = json.NewEncoder(w).Encode(simpleResponse{http.StatusOK, "created", map[string]int64{"campaign_id": id}})
 	}
 }
 
@@ -134,10 +134,4 @@ func MarkInApp(dep *Dependencies) http.HandlerFunc {
 		if err := dep.Repo.MarkInAppRead(ctx, id, read); err != nil { w.WriteHeader(http.StatusInternalServerError); _ = json.NewEncoder(w).Encode(simpleResponse{http.StatusInternalServerError, "failed", nil}); return }
 		_ = json.NewEncoder(w).Encode(simpleResponse{http.StatusOK, "ok", nil})
 	}
-}
-
-func setHeaderValues(writer http.ResponseWriter) {
-	writer.Header().Set("Content-Type", "application/json")
-	writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-	writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 }

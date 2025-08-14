@@ -2,13 +2,12 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"log"
 	"os"
 	"strconv"
 
-	_ "github.com/lib/pq"
 	"github.com/mostafijurj/notification-service/config"
+	"github.com/mostafijurj/notification-service/internal/db"
 	ikafka "github.com/mostafijurj/notification-service/internal/kafka"
 	"github.com/mostafijurj/notification-service/internal/repository"
 	kafkago "github.com/segmentio/kafka-go"
@@ -16,10 +15,14 @@ import (
 
 func main() {
 	cfg := config.Load()
-	db, err := sql.Open("postgres", cfg.PostgresDSN)
-	if err != nil { log.Fatalf("db open: %v", err) }
-	repo := repository.NewRepository(db)
+	dbConn, err := db.OpenGormPostgres(cfg.PostgresDSN)
+	if err != nil {
+		log.Fatalf("db open: %v", err)
+	}
+
+	repo := repository.NewRepository(dbConn)
 	log.Println("Worker inapp started")
+
 	h := func(ctx context.Context, m kafkago.Message) error {
 		id, _ := strconv.ParseInt(string(m.Value), 10, 64)
 		// For demo, mark sent and insert delivery attempt
@@ -27,7 +30,9 @@ func main() {
 		_ = repo.InsertDeliveryAttempt(ctx, id, 1, nil, "success", nil, nil)
 		return nil
 	}
+
 	if err := ikafka.ConsumeLoop(cfg.KafkaBrokers, ikafka.TopicReadyInAppLow, "worker-inapp-low", h); err != nil {
-		log.Println(err); os.Exit(1)
+		log.Println(err)
+		os.Exit(1)
 	}
 }

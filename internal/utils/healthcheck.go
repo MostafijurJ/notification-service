@@ -4,13 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/segmentio/kafka-go"
 	"log"
 	"net"
 	"time"
 
 	kafkaPkg "github.com/mostafijurj/notification-service/internal/kafka"
 	"github.com/redis/go-redis/v9"
-	
 )
 
 // TestPostgresConnection checks if PostgreSQL is reachable

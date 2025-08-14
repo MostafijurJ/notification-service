@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/mostafijurj/notification-service/config"
@@ -25,14 +27,46 @@ func main() {
 	cfg := config.Load()
 	logger.Init()
 
+	// Check for force reset flag
+	forceReset := false
+	for _, arg := range os.Args {
+		if arg == "--force-reset" || arg == "-f" {
+			forceReset = true
+			break
+		}
+	}
+
+	if forceReset {
+		log.Println("🚨 FORCE RESET MODE: This will drop all existing tables!")
+		log.Println("Press Ctrl+C within 5 seconds to cancel...")
+		time.Sleep(5 * time.Second)
+	}
+
 	preConnectionTest(nil, cfg)
 
-	dbConn, err := db.OpenPostgres(cfg.PostgresDSN)
+	dbConn, err := db.OpenGormPostgres(cfg.PostgresDSN)
 	if err != nil {
 		log.Fatalf("db open: %v", err)
 	}
-	if err := db.RunMigrations(context.Background(), dbConn); err != nil {
-		log.Fatalf("migrations: %v", err)
+	defer func() {
+		sqlDB, err := dbConn.DB()
+		if err != nil {
+			log.Printf("failed to get underlying sql.DB: %v", err)
+			return
+		}
+		if err := sqlDB.Close(); err != nil {
+			log.Printf("failed to close db: %v", err)
+		}
+	}()
+
+	if forceReset {
+		if err := db.RunMigrationsWithOptions(context.Background(), dbConn, true); err != nil {
+			log.Fatalf("migrations: %v", err)
+		}
+	} else {
+		if err := db.RunMigrations(context.Background(), dbConn); err != nil {
+			log.Fatalf("migrations: %v", err)
+		}
 	}
 	repo := repository.NewRepository(dbConn)
 

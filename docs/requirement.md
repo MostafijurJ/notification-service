@@ -58,6 +58,14 @@ The system must support multiple delivery channels:
 
 ---
 
+### 8. Technology Stack
+- **Backend**: Golang
+- **Database**: PostgreSQL
+- **ORM**: GORM v1.25.5 (Go Object Relational Mapper)
+- **Cache/Queue**: Redis
+- **Message Broker**: Kafka
+- **Push Service**: Firebase Cloud Messaging (FCM)
+
 ## Summary
 The notification system must be:
 - **Modular**: Easy to extend with new channels (e.g., WhatsApp, voice calls).
